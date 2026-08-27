@@ -290,10 +290,14 @@ def api_log():
 
     conn = db.get_conn()
 
+    pt = None
     # auto-resolve syllabus_master topic from plan_topic name/section if not given
-    if not topic_id and plan_topic_id:
+    if plan_topic_id:
         pt = conn.execute("SELECT * FROM plan_topics WHERE id=?", (plan_topic_id,)).fetchone()
-        if pt:
+        if not pt:
+            conn.close()
+            return json_error("The selected plan topic no longer exists", 404)
+        if not topic_id:
             sm = conn.execute(
                 "SELECT id FROM syllabus_master WHERE section=? AND topic_name LIKE ?",
                 (pt["section"], f"%{pt['topic_name']}%"),
@@ -306,9 +310,6 @@ def api_log():
             if sm:
                 topic_id = sm["id"]
 
-    if plan_topic_id and not pt:
-        conn.close()
-        return json_error("The selected plan topic no longer exists", 404)
     if topic_id and not conn.execute("SELECT 1 FROM syllabus_master WHERE id=?", (topic_id,)).fetchone():
         conn.close()
         return json_error("The selected syllabus topic no longer exists", 404)
@@ -423,11 +424,17 @@ def api_errors():
         except ValueError as exc:
             conn.close()
             return json_error(str(exc))
+
+        reason_tag = data.get("reason_tag")
+        if reason_tag is not None and reason_tag not in REASON_TAGS:
+            conn.close()
+            return json_error("Invalid reason tag", 400)
+
         conn.execute(
             """INSERT INTO error_log (date, topic_id, mock_id_nullable, section, reason_tag, notes)
                VALUES (?,?,?,?,?,?)""",
             (error_date, data.get("topic_id"), data.get("mock_id_nullable"),
-             data.get("section"), data.get("reason_tag"), data.get("notes")),
+             data.get("section"), reason_tag, data.get("notes")),
         )
         conn.commit()
         conn.close()
