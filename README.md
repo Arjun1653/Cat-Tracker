@@ -6,11 +6,7 @@ percentile predictor, analytics, and configurable study feedback. Runs
 entirely on your machine — no accounts, no cloud, nothing leaves your
 computer.
 
-> **Note on the browser change:** the original spec called for a terminal
-> UI (`textual`). Per your instruction this build is a local web app instead
-> — a small Python (Flask) server on your machine, opened in your default
-> browser, with a single SQLite file next to the app. Everything else (data
-> model, screens, rules, "no random numbers", offline-forever) is unchanged.
+
 
 ## One-time setup
 
