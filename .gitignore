@@ -1,0 +1,17 @@
+# Local app state: never publish personal study data.
+cat_tracker.db
+cat_tracker.db-*
+
+# Python-generated files and local tooling state.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Test and coverage output.
+.pytest_cache/
+.coverage
+htmlcov/

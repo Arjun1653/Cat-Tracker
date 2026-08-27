@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT 2026 :: prep tracker</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&gt;_</span>
+      <span class="brand-text">cat_tracker<span class="cursor">&#9608;</span></span>
+    </div>
+    <nav class="tabbar" id="tabbar" aria-label="Tracker sections">
+      <button class="tab active" data-tab="home" aria-current="page"><span class="tab-idx">1</span>Home</button>
+      <button class="tab" data-tab="week"><span class="tab-idx">2</span>This Week</button>
+      <button class="tab" data-tab="syllabus"><span class="tab-idx">3</span>Syllabus</button>
+      <button class="tab" data-tab="mocks"><span class="tab-idx">4</span>Mocks</button>
+      <button class="tab" data-tab="errors"><span class="tab-idx">5</span>Error Log</button>
+      <button class="tab" data-tab="predictor"><span class="tab-idx">6</span>Predictor</button>
+      <button class="tab" data-tab="analytics"><span class="tab-idx">7</span>Analytics</button>
+      <button class="tab" data-tab="settings"><span class="tab-idx">8</span>Settings</button>
+    </nav>
+  </header>
+
+  <main class="screen-wrap" id="main-content" tabindex="-1">
+    <section id="screen-home" class="screen active"></section>
+    <section id="screen-week" class="screen"></section>
+    <section id="screen-syllabus" class="screen"></section>
+    <section id="screen-mocks" class="screen"></section>
+    <section id="screen-errors" class="screen"></section>
+    <section id="screen-predictor" class="screen"></section>
+    <section id="screen-analytics" class="screen"></section>
+    <section id="screen-settings" class="screen"></section>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
