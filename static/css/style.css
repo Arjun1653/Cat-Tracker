@@ -118,6 +118,7 @@ button {
 
 .screen { display: none; animation: fadein .25s ease; }
 .screen.active { display: block; }
+.load-error { max-width: 560px; margin: 40px auto; text-align: center; }
 @keyframes fadein { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform: translateY(0);} }
 
 /* ---------------------------------------------------------------------
@@ -243,21 +244,35 @@ h3 { font-size: 15px; color: var(--text-muted); font-family: var(--font-body); t
 /* ---------------------------------------------------------------------
    Week timeline strip (recurring "OMR tick" motif)
 --------------------------------------------------------------------- */
-.week-rail { display: flex; gap: 4px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+.week-browser { padding: 16px; }
+.week-browser-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+.week-actions { display: flex; gap: 6px; }
+.week-arrow { padding: 7px 11px; font-size: 18px; line-height: 1; }
+.week-arrow:disabled { opacity: .35; cursor: not-allowed; }
+.week-rail { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
 .week-tick {
-  flex: 1; min-width: 34px; height: 30px;
+  flex: 1; min-width: 76px; min-height: 48px;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);
   cursor: pointer; background: var(--bg-panel);
   transition: all .15s;
 }
+.week-tick span { font-size: 10px; color: var(--text-dim); }
 .week-tick:hover { border-color: var(--text-dim); color: var(--text-primary); }
 .week-tick.current { border-color: var(--accent-signal); color: var(--accent-signal); background: rgba(255,90,54,0.08); }
 .week-tick.selected { background: var(--bg-panel-hover); color: var(--text-primary); }
+.week-tick.selected span { color: var(--text-muted); }
+.week-current-line { color: var(--text-muted); font-size: 12px; }
+.current-dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--accent-signal); }
 
-.week-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.week-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .week-dates { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
+.week-progress-total { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.week-progress-total strong { color: var(--accent-calm); font: 24px var(--font-mono); }
+.week-progress-total span { color: var(--text-muted); font: 11px var(--font-mono); }
+.week-section-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.week-section-stat { background: var(--bg-panel-raised); border: 1px solid var(--line-soft); border-radius: var(--radius-sm); padding: 12px; font: 12px var(--font-mono); }
 
 .topic-row {
   display: grid; grid-template-columns: 1fr 90px 130px 60px;
@@ -278,6 +293,15 @@ h3 { font-size: 15px; color: var(--text-muted); font-family: var(--font-body); t
   padding: 5px 10px; font-size: 12px; font-family: var(--font-mono);
 }
 .log-btn:hover { border-color: var(--accent-calm); color: var(--accent-calm); }
+
+@media (max-width: 600px) {
+  .week-browser-top, .week-header { align-items: flex-start; }
+  .week-header { gap: 14px; }
+  .week-section-summary { grid-template-columns: 1fr; }
+  .topic-row { grid-template-columns: 1fr 74px; gap: 8px; }
+  .topic-row .pbar-row { grid-column: 1 / -1; grid-row: 2; }
+  .topic-row > div:last-child { grid-column: 1 / -1; grid-row: 3; justify-content: flex-end; }
+}
 
 /* ---------------------------------------------------------------------
    Tables

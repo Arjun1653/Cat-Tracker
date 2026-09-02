@@ -1,6 +1,6 @@
 # CAT 2026 Prep Tracker
 
-A local web-app tracker for CAT 2026 prep: a nine-week plan, syllabus master
+A local web-app tracker for CAT 2026 prep: a seven-week plan, syllabus master
 with five-year weightage, practice logging, mocks, error analysis, a
 percentile predictor, analytics, and configurable study feedback. Runs
 entirely on your machine — no accounts, no cloud, nothing leaves your
@@ -39,8 +39,8 @@ the same folder as the app. It's a plain SQLite database — nothing leaves
 your machine, no accounts, no sync.
 
 On the very first run, the app seeds this file with:
-- the 9-week schedule (topics + target counts, 30 Aug – 30 Oct 2026), from
-  your schedule PDF
+- the 7-week schedule (topics + target counts, 3 Sep – 20 Oct 2026), from
+  `CAT_2026_Schedule_Updated_7Week.md`
 - the full syllabus master list with 5-year (2021–2025) question-frequency
   weightage per topic, from your syllabus PDF, with **Para Jumbles** flagged
   `volatile` (CAT 2024 had zero across all three slots after a steady 2–3
@@ -123,7 +123,7 @@ app caps how many lines show per Home-load in Settings.
 
 ## Notes on the data extraction
 
-- **Weekly plan**: pulled directly from the 9-week schedule PDF, topic by
+- **Weekly plan**: pulled directly from the 7-week schedule, topic by
   topic, with the exact target counts and units (questions / sets /
   passages) as printed for each week.
 - **Syllabus master weights**: pulled from the "Total" column (all slots,

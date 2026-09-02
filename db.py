@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS plan_topics (
     topic_name TEXT NOT NULL,
     target_count INTEGER NOT NULL,
     unit TEXT NOT NULL CHECK(unit IN ('q','set','psg')),
+    syllabus_topic_id INTEGER,
     FOREIGN KEY(week_num) REFERENCES weeks(week_num)
 );
 
@@ -103,12 +104,15 @@ def get_conn():
 def init_db():
     conn = get_conn()
     conn.executescript(SCHEMA)
+    _ensure_schedule_link_column(conn)
     conn.commit()
 
-    # seed only if empty
+    # Seed new databases, or replace only the schedule when its source data changes.
     already_seeded = conn.execute("SELECT COUNT(*) c FROM weeks").fetchone()["c"] > 0
     if not already_seeded:
         _seed(conn)
+    elif not _schedule_matches(conn):
+        _replace_schedule(conn)
 
     if conn.execute("SELECT COUNT(*) c FROM settings").fetchone()["c"] == 0:
         conn.execute("INSERT INTO settings (id) VALUES (1)")
@@ -116,6 +120,37 @@ def init_db():
         conn.execute("INSERT INTO streak_state (id, current_streak, last_log_date) VALUES (1, 0, NULL)")
     conn.commit()
     conn.close()
+
+
+def _schedule_matches(conn):
+    import seed_data as sd
+
+    weeks = [tuple(row) for row in conn.execute(
+        "SELECT week_num, start_date, end_date FROM weeks ORDER BY week_num"
+    ).fetchall()]
+    topics = [tuple(row) for row in conn.execute(
+        "SELECT week_num, section, topic_name, target_count, unit FROM plan_topics ORDER BY week_num, id"
+    ).fetchall()]
+    return weeks == sd.WEEKS and topics == sd.PLAN_TOPICS
+
+
+def _replace_schedule(conn):
+    import seed_data as sd
+
+    # Preserve practice history while clearing links to obsolete plan rows.
+    conn.execute("UPDATE daily_logs SET plan_topic_id = NULL")
+    conn.execute("DELETE FROM plan_topics")
+    conn.execute("DELETE FROM weeks")
+    conn.executemany(
+        "INSERT INTO weeks (week_num, start_date, end_date) VALUES (?, ?, ?)",
+        sd.WEEKS,
+    )
+    conn.executemany(
+        "INSERT INTO plan_topics (week_num, section, topic_name, target_count, unit) VALUES (?, ?, ?, ?, ?)",
+        sd.PLAN_TOPICS,
+    )
+    _link_plan_topics(conn)
+    conn.commit()
 
 
 def _seed(conn):
@@ -133,4 +168,44 @@ def _seed(conn):
         "INSERT INTO syllabus_master (section, topic_name, historical_weight, volatile_flag) VALUES (?, ?, ?, ?)",
         [(s, t, w, 1 if v else 0) for (s, t, w, v) in sd.SYLLABUS_MASTER],
     )
+    _link_plan_topics(conn)
     conn.commit()
+
+
+def _ensure_schedule_link_column(conn):
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(plan_topics)").fetchall()}
+    if "syllabus_topic_id" not in columns:
+        conn.execute("ALTER TABLE plan_topics ADD COLUMN syllabus_topic_id INTEGER")
+        _link_plan_topics(conn)
+
+
+def _link_plan_topics(conn):
+    aliases = {
+        "Percentages": "Percentage",
+        "Mixtures & Alligations": "Mixture & Alligation",
+        "Ratio, Proportion & Variation": "Arithmetics (Ratio & Proportion)",
+        "Progressions": "Progressions & Series",
+        "Interest": "Simple Interest, Compound Interest",
+        "Linear & Quadratic Equations": "Equations & Polynomials",
+        "Logarithms": "Logarithms & Exponents",
+        "Functions": "Functions & Graphs",
+        "Permutations & Combinations": "Permutation, Combination & Probability",
+        "Pipes, Trains & Boats": "Pipes & Cisterns / Clocks",
+        "Clocks": "Pipes & Cisterns / Clocks",
+        "Seating Arrangements": "Sitting / Standing Arrangement",
+        "Bar Graphs": "Line & Bar Charts",
+        "Column Graphs": "Line & Bar Charts",
+        "Line Charts": "Line & Bar Charts",
+        "Tables": "Data Tabulation",
+    }
+    topics = conn.execute("SELECT id, section, topic_name FROM plan_topics").fetchall()
+    for topic in topics:
+        syllabus_name = aliases.get(topic["topic_name"], topic["topic_name"])
+        match = conn.execute(
+            "SELECT id FROM syllabus_master WHERE section=? AND topic_name=?",
+            (topic["section"], syllabus_name),
+        ).fetchone()
+        conn.execute(
+            "UPDATE plan_topics SET syllabus_topic_id=? WHERE id=?",
+            (match["id"] if match else None, topic["id"]),
+        )

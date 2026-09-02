@@ -297,18 +297,8 @@ def api_log():
         if not pt:
             conn.close()
             return json_error("The selected plan topic no longer exists", 404)
-        if not topic_id:
-            sm = conn.execute(
-                "SELECT id FROM syllabus_master WHERE section=? AND topic_name LIKE ?",
-                (pt["section"], f"%{pt['topic_name']}%"),
-            ).fetchone()
-            if not sm:
-                sm = conn.execute(
-                    "SELECT id FROM syllabus_master WHERE section=? AND topic_name = ?",
-                    (pt["section"], pt["topic_name"]),
-                ).fetchone()
-            if sm:
-                topic_id = sm["id"]
+        if not topic_id and pt["syllabus_topic_id"]:
+            topic_id = pt["syllabus_topic_id"]
 
     if topic_id and not conn.execute("SELECT 1 FROM syllabus_master WHERE id=?", (topic_id,)).fetchone():
         conn.close()
@@ -441,8 +431,10 @@ def api_errors():
         return jsonify({"ok": True})
 
     rows = conn.execute("""
-        SELECT el.*, sm.topic_name as topic_name, sm.section as topic_section
+         SELECT el.*, sm.topic_name as topic_name, sm.section as topic_section,
+             m.date as mock_date, m.series_name as mock_series
         FROM error_log el LEFT JOIN syllabus_master sm ON sm.id = el.topic_id
+         LEFT JOIN mocks m ON m.id = el.mock_id_nullable
         ORDER BY el.date DESC, el.id DESC
     """).fetchall()
 

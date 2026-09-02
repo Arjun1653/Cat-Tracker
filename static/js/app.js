@@ -1,6 +1,6 @@
 const API = {
   async get(url) {
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: "no-store" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Could not load data");
     return data;
@@ -39,6 +39,19 @@ function localDate() {
   return new Date(now - offset).toISOString().slice(0, 10);
 }
 
+function formatScheduleDate(value, options = { day: "numeric", month: "short" }) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, options);
+}
+
+function formatScheduleRange(start, end) {
+  return `${formatScheduleDate(start)} - ${formatScheduleDate(end, { day: "numeric", month: "short", year: "numeric" })}`;
+}
+
+function wholeNumber(value) {
+  const text = String(value).trim();
+  return /^\d+$/.test(text) ? Number(text) : null;
+}
+
 async function save(action) {
   try { return await action(); }
   catch (error) { toast(error.message || "Something went wrong. Try again."); return null; }
@@ -58,6 +71,9 @@ const screens = {
   settings: renderSettings,
 };
 
+let activeTab = null;
+let screenLoadToken = 0;
+
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
@@ -76,14 +92,40 @@ window.addEventListener("unhandledrejection", event => {
 });
 
 function switchTab(name) {
+  if (!screens[name]) return;
+  activeTab = name;
+  if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
   document.querySelectorAll(".tab").forEach(t => {
     const active = t.dataset.tab === name;
     t.classList.toggle("active", active);
     t.toggleAttribute("aria-current", active);
   });
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === "screen-" + name));
-  screens[name]();
+  loadScreen(name);
 }
+
+async function loadScreen(name) {
+  const token = ++screenLoadToken;
+  try {
+    await screens[name]();
+  } catch (error) {
+    if (token !== screenLoadToken) return;
+    const screen = document.getElementById(`screen-${name}`);
+    screen.innerHTML = `
+      <div class="panel load-error">
+        <h2>Could not load this view</h2>
+        <div class="subtle">${escapeHTML(error.message || "The server did not return usable data.")}</div>
+        <button class="btn mt" data-retry>Retry</button>
+      </div>
+    `;
+    screen.querySelector("[data-retry]").addEventListener("click", () => loadScreen(name));
+  }
+}
+
+window.addEventListener("hashchange", () => {
+  const name = location.hash.slice(1);
+  if (screens[name] && name !== activeTab) switchTab(name);
+});
 
 // ---------------------------------------------------------------------
 // HOME
@@ -144,7 +186,7 @@ async function renderHome() {
     </div>
   `;
 
-  renderQuickLogForm();
+  await renderQuickLogForm();
 }
 
 function greeting() {
@@ -183,11 +225,12 @@ async function renderQuickLogForm() {
   document.getElementById("ql-submit").addEventListener("click", async () => {
     const topicSel = document.getElementById("ql-topic");
     const count = document.getElementById("ql-count").value;
-    if (!count) { toast("Enter a count first"); return; }
+    const countValue = wholeNumber(count);
+    if (countValue === null || countValue <= 0) { toast("Enter a whole number greater than zero"); return; }
     const unit = topicSel.selectedOptions[0].dataset.unit;
     const result = await save(() => API.post("/api/log", {
       plan_topic_id: parseInt(topicSel.value),
-      count_done: parseInt(count),
+      count_done: countValue,
       unit,
       notes: document.getElementById("ql-notes").value || null,
     }));
@@ -206,16 +249,34 @@ async function renderWeek() {
   const s = document.getElementById("screen-week");
   s.innerHTML = '<div class="empty-state">Loading\u2026</div>';
   const data = await API.get("/api/weeks");
-  if (selectedWeek === null) selectedWeek = data.current_week;
+  const selectedExists = data.weeks.some(w => w.week_num === selectedWeek);
+  if (!selectedExists) selectedWeek = data.current_week;
+  const selectedIndex = data.weeks.findIndex(w => w.week_num === selectedWeek);
+  const selected = data.weeks[selectedIndex];
 
   const rail = data.weeks.map(w => `
-    <div class="week-tick ${w.week_num === data.current_week ? 'current' : ''} ${w.week_num === selectedWeek ? 'selected' : ''}" data-week="${w.week_num}">W${w.week_num}</div>
+    <button class="week-tick ${w.week_num === data.current_week ? 'current' : ''} ${w.week_num === selectedWeek ? 'selected' : ''}" data-week="${w.week_num}" role="tab" aria-selected="${w.week_num === selectedWeek}">
+      <strong>W${w.week_num}</strong><span>${formatScheduleDate(w.start_date)}</span>
+    </button>
   `).join("");
 
   s.innerHTML = `
-    <div class="eyebrow">9-week plan</div>
+    <div class="eyebrow">${data.weeks.length}-week plan &middot; live schedule</div>
     <h1 class="mb">This Week</h1>
-    <div class="week-rail">${rail}</div>
+    <div class="week-browser panel mb">
+      <div class="week-browser-top">
+        <div>
+          <h2>Study plan</h2>
+          <div class="subtle">${data.weeks.length} weeks &middot; ${formatScheduleRange(data.weeks[0].start_date, data.weeks[data.weeks.length - 1].end_date)}</div>
+        </div>
+        <div class="week-actions">
+          <button class="btn secondary week-arrow" data-week-step="-1" aria-label="Previous week" ${selectedIndex <= 0 ? "disabled" : ""}>&larr;</button>
+          <button class="btn secondary week-arrow" data-week-step="1" aria-label="Next week" ${selectedIndex >= data.weeks.length - 1 ? "disabled" : ""}>&rarr;</button>
+        </div>
+      </div>
+      <div class="week-rail" role="tablist" aria-label="Study weeks">${rail}</div>
+      <div class="week-current-line"><span class="current-dot"></span> Current week: <strong>Week ${data.current_week}</strong></div>
+    </div>
     <div id="week-detail"></div>
   `;
 
@@ -226,7 +287,14 @@ async function renderWeek() {
     });
   });
 
-  renderWeekDetail(data.weeks.find(w => w.week_num === selectedWeek));
+  s.querySelectorAll("[data-week-step]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedWeek = data.weeks[selectedIndex + parseInt(button.dataset.weekStep)].week_num;
+      renderWeek();
+    });
+  });
+
+  renderWeekDetail(selected);
 }
 
 function renderWeekDetail(week) {
@@ -235,6 +303,21 @@ function renderWeekDetail(week) {
 
   const bySection = { QA: [], DILR: [], VARC: [] };
   week.topics.forEach(t => bySection[t.section].push(t));
+  const totalTarget = week.topics.reduce((sum, topic) => sum + topic.target_count, 0);
+  const totalDone = week.topics.reduce((sum, topic) => sum + topic.done, 0);
+  const completion = totalTarget ? Math.min(100, Math.round(totalDone / totalTarget * 1000) / 10) : 0;
+
+  const sectionSummary = Object.entries(bySection).filter(([, topics]) => topics.length).map(([sec, topics]) => {
+    const target = topics.reduce((sum, topic) => sum + topic.target_count, 0);
+    const done = topics.reduce((sum, topic) => sum + topic.done, 0);
+    const pct = target ? Math.min(100, Math.round(done / target * 1000) / 10) : 0;
+    return `
+      <div class="week-section-stat">
+        <div class="flex-between"><span class="section-color-${sec.toLowerCase()}">${sec}</span><span class="num">${done}/${target}</span></div>
+        <div class="pbar-track mt"><div class="pbar-fill" style="width:${pct}%; background:${SECTION_COLORS[sec]}"></div></div>
+      </div>
+    `;
+  }).join("");
 
   const sectionsHtml = Object.keys(bySection).map(sec => {
     const topics = bySection[sec];
@@ -264,10 +347,15 @@ function renderWeekDetail(week) {
   }).join("");
 
   box.innerHTML = `
-    <div class="week-header">
-      <h2>Week ${week.week_num} ${week.is_current ? '<span class="badge" style="border-color:var(--accent-signal);color:var(--accent-signal)">current</span>' : ''}</h2>
-      <span class="week-dates">${week.start_date} \u2192 ${week.end_date}</span>
+    <div class="week-header panel mb">
+      <div>
+        <div class="eyebrow">${week.is_current ? "Current focus" : "Scheduled week"}</div>
+        <h2>Week ${week.week_num} ${week.is_current ? '<span class="badge" style="border-color:var(--accent-signal);color:var(--accent-signal)">current</span>' : ''}</h2>
+        <span class="week-dates">${formatScheduleRange(week.start_date, week.end_date)}</span>
+      </div>
+      <div class="week-progress-total"><strong>${completion}%</strong><span>${totalDone}/${totalTarget} done</span></div>
     </div>
+    <div class="week-section-summary mb">${sectionSummary}</div>
     ${sectionsHtml || '<div class="empty-state">No topics this week</div>'}
   `;
 
@@ -277,8 +365,9 @@ function renderWeekDetail(week) {
       const unit = btn.dataset.unit;
       const input = document.getElementById(`add-${id}`);
       const val = input.value;
-      if (!val) { toast("Enter a number first"); return; }
-      const result = await save(() => API.post("/api/log", { plan_topic_id: parseInt(id), count_done: parseInt(val), unit }));
+      const countValue = wholeNumber(val);
+      if (countValue === null || countValue <= 0) { toast("Enter a whole number greater than zero"); return; }
+      const result = await save(() => API.post("/api/log", { plan_topic_id: parseInt(id), count_done: countValue, unit }));
       if (!result) return;
       toast("Logged \u2713");
       renderWeek();
@@ -568,7 +657,7 @@ function renderErrorList(entries) {
       <div class="mono small subtle">${e.date}</div>
       <div>${e.topic_name || "\u2014"} ${e.topic_section ? `<span class="badge ${e.topic_section.toLowerCase()}">${e.topic_section}</span>` : ""}</div>
       <div>${e.reason_tag ? `<span class="badge" style="border-color:var(--accent-gold);color:var(--accent-gold)">${e.reason_tag}</span>` : ""}</div>
-      <div class="subtle small">${escapeHTML(e.notes || "")}</div>
+      <div class="subtle small">${e.mock_date ? `Mock: ${escapeHTML(e.mock_series || "Mock")} (${escapeHTML(e.mock_date)})` : ""}${e.notes ? `${e.mock_date ? " · " : ""}${escapeHTML(e.notes)}` : ""}</div>
     </div>
   `).join("");
 }
@@ -785,7 +874,9 @@ async function renderSettings() {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.planTopic;
       const val = document.getElementById(`pt-${id}`).value;
-      const result = await save(() => API.post(`/api/settings/plan_topic/${id}`, { target_count: parseInt(val) }));
+      const targetCount = wholeNumber(val);
+      if (targetCount === null || targetCount < 0) { toast("Target must be a whole number"); return; }
+      const result = await save(() => API.post(`/api/settings/plan_topic/${id}`, { target_count: targetCount }));
       if (!result) return;
       toast("Target updated \u2713");
     });
@@ -795,4 +886,4 @@ async function renderSettings() {
 // ---------------------------------------------------------------------
 // boot
 // ---------------------------------------------------------------------
-renderHome();
+switchTab(screens[location.hash.slice(1)] ? location.hash.slice(1) : "home");

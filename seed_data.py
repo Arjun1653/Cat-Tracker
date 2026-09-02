@@ -1,6 +1,6 @@
 """
 Seed data extracted from:
-  - Free_CAT_Study_Plan_Generator___intense.pdf  (9-week schedule, 30 Aug - 30 Oct 2026)
+    - CAT_2026_Schedule_Updated_7Week.md  (7-week schedule, 3 Sep - 20 Oct 2026)
   - CAT_2026_Syllabus.pdf (chapter-wise question-frequency totals, CAT 2021-2025, all slots)
 
 This module is pure data + is only ever read at first-run seed time.
@@ -10,105 +10,93 @@ This module is pure data + is only ever read at first-run seed time.
 # WEEKS  (week_num, start_date, end_date)
 # ---------------------------------------------------------------------------
 WEEKS = [
-    (1, "2026-08-30", "2026-09-05"),
-    (2, "2026-09-06", "2026-09-12"),
-    (3, "2026-09-13", "2026-09-19"),
-    (4, "2026-09-20", "2026-09-26"),
-    (5, "2026-09-27", "2026-10-03"),
-    (6, "2026-10-04", "2026-10-10"),
-    (7, "2026-10-11", "2026-10-17"),
-    (8, "2026-10-18", "2026-10-24"),
-    (9, "2026-10-25", "2026-10-30"),
+    (1, "2026-09-03", "2026-09-09"),
+    (2, "2026-09-10", "2026-09-16"),
+    (3, "2026-09-17", "2026-09-23"),
+    (4, "2026-09-24", "2026-09-30"),
+    (5, "2026-10-01", "2026-10-07"),
+    (6, "2026-10-08", "2026-10-14"),
+    (7, "2026-10-15", "2026-10-20"),
 ]
 
 EXAM_DATE = "2026-11-29"
 
 # ---------------------------------------------------------------------------
 # PLAN TOPICS  (week_num, section, topic_name, target_count, unit)
-# unit is exactly as printed in the schedule PDF for that row (q / set / psg)
+# unit is exactly as printed in the schedule for that row (q / set / psg)
 # ---------------------------------------------------------------------------
 PLAN_TOPICS = [
     # Week 1
     (1, "QA", "Averages", 100, "q"),
     (1, "QA", "Percentages", 60, "q"),
-    (1, "QA", "Mixtures & Alligations", 8, "q"),
+    (1, "QA", "Mixtures & Alligations", 40, "q"),
+    (1, "QA", "Ratio, Proportion & Variation", 16, "q"),
     (1, "DILR", "Seating Arrangements", 25, "set"),
-    (1, "DILR", "Bar Graphs", 15, "set"),
-    (1, "VARC", "Reading Comprehension", 48, "psg"),
+    (1, "DILR", "Bar Graphs", 25, "set"),
+    (1, "DILR", "Caselets", 1, "set"),
+    (1, "VARC", "Reading Comprehension", 62, "psg"),
 
     # Week 2
-    (2, "QA", "Mixtures & Alligations", 32, "q"),
-    (2, "QA", "Ratio, Proportion & Variation", 60, "q"),
+    (2, "QA", "Ratio, Proportion & Variation", 44, "q"),
     (2, "QA", "Progressions", 50, "q"),
-    (2, "QA", "Profit & Loss", 26, "q"),
-    (2, "DILR", "Bar Graphs", 10, "set"),
-    (2, "DILR", "Caselets", 25, "set"),
-    (2, "DILR", "Column Graphs", 5, "set"),
-    (2, "VARC", "Reading Comprehension", 48, "psg"),
+    (2, "QA", "Profit & Loss", 80, "q"),
+    (2, "QA", "Time & Work", 42, "q"),
+    (2, "DILR", "Caselets", 24, "set"),
+    (2, "DILR", "Column Graphs", 25, "set"),
+    (2, "DILR", "Line Charts", 2, "set"),
+    (2, "VARC", "Reading Comprehension", 62, "psg"),
 
     # Week 3
-    (3, "QA", "Profit & Loss", 54, "q"),
-    (3, "QA", "Time & Work", 100, "q"),
-    (3, "QA", "Time Speed Distance", 14, "q"),
-    (3, "DILR", "Column Graphs", 20, "set"),
-    (3, "DILR", "Line Charts", 20, "set"),
-    (3, "VARC", "Reading Comprehension", 48, "psg"),
+    (3, "QA", "Time & Work", 58, "q"),
+    (3, "QA", "Time Speed Distance", 80, "q"),
+    (3, "QA", "Races", 20, "q"),
+    (3, "QA", "Pipes, Trains & Boats", 40, "q"),
+    (3, "QA", "Interest", 18, "q"),
+    (3, "DILR", "Line Charts", 23, "set"),
+    (3, "DILR", "Cubes", 15, "set"),
+    (3, "DILR", "Pie Charts", 13, "set"),
+    (3, "VARC", "Reading Comprehension", 62, "psg"),
 
     # Week 4
-    (4, "QA", "Time Speed Distance", 66, "q"),
-    (4, "QA", "Races", 20, "q"),
-    (4, "QA", "Pipes, Trains & Boats", 40, "q"),
     (4, "QA", "Interest", 42, "q"),
-    (4, "DILR", "Line Charts", 5, "set"),
-    (4, "DILR", "Cubes", 15, "set"),
-    (4, "DILR", "Pie Charts", 20, "set"),
-    (4, "VARC", "Reading Comprehension", 48, "psg"),
+    (4, "QA", "Linear & Quadratic Equations", 100, "q"),
+    (4, "QA", "Inequalities", 74, "q"),
+    (4, "DILR", "Pie Charts", 27, "set"),
+    (4, "DILR", "Tables", 24, "set"),
+    (4, "VARC", "Reading Comprehension", 62, "psg"),
 
     # Week 5
-    (5, "QA", "Interest", 18, "q"),
-    (5, "QA", "Linear & Quadratic Equations", 100, "q"),
-    (5, "QA", "Inequalities", 50, "q"),
-    (5, "DILR", "Pie Charts", 20, "set"),
-    (5, "DILR", "Tables", 20, "set"),
-    (5, "VARC", "Reading Comprehension", 48, "psg"),
+    (5, "QA", "Inequalities", 6, "q"),
+    (5, "QA", "Logarithms", 25, "q"),
+    (5, "QA", "Maxima Minima", 25, "q"),
+    (5, "QA", "Functions", 80, "q"),
+    (5, "QA", "Set Theory", 40, "q"),
+    (5, "QA", "Number System", 40, "q"),
+    (5, "DILR", "Tables", 11, "set"),
+    (5, "DILR", "Venn Diagrams", 35, "set"),
+    (5, "DILR", "Games & Tournaments", 5, "set"),
+    (5, "VARC", "Reading Comprehension", 32, "psg"),
+    (5, "VARC", "Odd One Out", 30, "q"),
 
     # Week 6
-    (6, "QA", "Inequalities", 30, "q"),
-    (6, "QA", "Logarithms", 25, "q"),
-    (6, "QA", "Maxima Minima", 25, "q"),
-    (6, "QA", "Functions", 80, "q"),
-    (6, "QA", "Set Theory", 8, "q"),
-    (6, "DILR", "Tables", 15, "set"),
-    (6, "DILR", "Venn Diagrams", 25, "set"),
-    (6, "VARC", "Reading Comprehension", 40, "psg"),
-    (6, "VARC", "Odd One Out", 8, "q"),
+    (6, "QA", "Number System", 160, "q"),
+    (6, "QA", "Geometry", 56, "q"),
+    (6, "DILR", "Games & Tournaments", 20, "set"),
+    (6, "DILR", "Syllogisms", 20, "q"),
+    (6, "DILR", "Clocks", 11, "q"),
+    (6, "VARC", "Odd One Out", 15, "q"),
+    (6, "VARC", "Para Summary", 47, "q"),
 
     # Week 7
-    (7, "QA", "Set Theory", 32, "q"),
-    (7, "QA", "Number System", 136, "q"),
-    (7, "DILR", "Venn Diagrams", 10, "set"),
-    (7, "DILR", "Games & Tournaments", 25, "set"),
-    (7, "DILR", "Syllogisms", 5, "q"),
-    (7, "VARC", "Odd One Out", 37, "q"),
-    (7, "VARC", "Para Summary", 11, "q"),
-
-    # Week 8
-    (8, "QA", "Number System", 64, "q"),
-    (8, "QA", "Geometry", 100, "q"),
-    (8, "QA", "Coordinate Geometry", 4, "q"),
-    (8, "DILR", "Syllogisms", 15, "q"),
-    (8, "DILR", "Clocks", 20, "q"),
-    (8, "DILR", "Logical Sequence & Series", 5, "q"),
-    (8, "VARC", "Para Summary", 48, "q"),
-
-    # Week 9
-    (9, "QA", "Coordinate Geometry", 46, "q"),
-    (9, "QA", "Probability", 40, "q"),
-    (9, "QA", "Permutations & Combinations", 80, "q"),
-    (9, "DILR", "Logical Sequence & Series", 15, "q"),
-    (9, "DILR", "Logical Connectives & Other Reasoning", 20, "q"),
-    (9, "VARC", "Para Summary", 1, "q"),
-    (9, "VARC", "Para Jumbles", 45, "q"),
+    (7, "QA", "Geometry", 44, "q"),
+    (7, "QA", "Coordinate Geometry", 50, "q"),
+    (7, "QA", "Probability", 40, "q"),
+    (7, "QA", "Permutations & Combinations", 80, "q"),
+    (7, "DILR", "Clocks", 9, "q"),
+    (7, "DILR", "Logical Sequence & Series", 20, "q"),
+    (7, "DILR", "Logical Connectives & Other Reasoning", 20, "q"),
+    (7, "VARC", "Para Summary", 13, "q"),
+    (7, "VARC", "Para Jumbles", 45, "q"),
 ]
 
 # ---------------------------------------------------------------------------
